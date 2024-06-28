@@ -16,7 +16,7 @@ source $ENV_NAME/bin/activate
 pip install --upgrade pip
 
 # Instalar las bibliotecas necesarias
-pip install opencv-python Pillow moviepy
+pip install opencv-python Pillow moviepy groq signal argparse
 
 # Ejecutar el script de Python pasando el prompt de texto como parámetro del video que se quiere generar
 python $SCRIPT_NAME "$1"

@@ -10,49 +10,39 @@ Licencia: GPL v3
 
 Descripción: Asistente de investigación por consola estilo GPT con Groq
 """
+import re
 import os
 import argparse
 import logging
 import signal
 import sys
-import time
-import subprocess
 import json
-from groq import Groq
+import time
+from langchain.chains import LLMChain
+from langchain_core.prompts import (
+    ChatPromptTemplate,
+    HumanMessagePromptTemplate,
+    MessagesPlaceholder,
+)
+from langchain_core.messages import SystemMessage
+from langchain.chains.conversation.memory import ConversationBufferWindowMemory
+from langchain_groq import ChatGroq
 from script_animator import generate_frames
 
 BANNER = """
-                                                                             
- @@@@@@    @@@@@@@  @@@@@@@   @@@  @@@@@@@   @@@@@@@                         
-@@@@@@@   @@@@@@@@  @@@@@@@@  @@@  @@@@@@@@  @@@@@@@                         
-!@@       !@@       @@!  @@@  @@!  @@!  @@@    @@!                           
-!@!       !@!       !@!  @!@  !@!  !@!  @!@    !@!                           
-!!@@!!    !@!       @!@!!@!   !!@  @!@@!@!     @!!                           
- !!@!!!   !!!       !!@!@!    !!!  !!@!!!      !!!                           
-     !:!  :!!       !!: :!!   !!:  !!:         !!:                           
-    !:!   :!:       :!:  !:!  :!:  :!:         :!:                           
-:::: ::    ::: :::  ::   :::   ::   ::          ::                           
-:: : :     :: :: :   :   : :  :     :           :                            
-                                                                             
-                                                                             
- @@@@@@   @@@  @@@  @@@  @@@@@@@@@@    @@@@@@   @@@@@@@   @@@@@@   @@@@@@@   
-@@@@@@@@  @@@@ @@@  @@@  @@@@@@@@@@@  @@@@@@@@  @@@@@@@  @@@@@@@@  @@@@@@@@  
-@@!  @@@  @@!@!@@@  @@!  @@! @@! @@!  @@!  @@@    @@!    @@!  @@@  @@!  @@@  
-!@!  @!@  !@!!@!@!  !@!  !@! !@! !@!  !@!  @!@    !@!    !@!  @!@  !@!  @!@  
-@!@!@!@!  @!@ !!@!  !!@  @!! !!@ @!@  @!@!@!@!    @!!    @!@  !@!  @!@!!@!   
-!!!@!!!!  !@!  !!!  !!!  !@!   ! !@!  !!!@!!!!    !!!    !@!  !!!  !!@!@!    
-!!:  !!!  !!:  !!!  !!:  !!:     !!:  !!:  !!!    !!:    !!:  !!!  !!: :!!   
-:!:  !:!  :!:  !:!  :!:  :!:     :!:  :!:  !:!    :!:    :!:  !:!  :!:  !:!  
-::   :::   ::   ::   ::  :::     ::   ::   :::     ::    ::::: ::  ::   :::  
- :   : :  ::    :   :     :      :     :   : :     :      : :  :    :   : :  
-                                                                             
+   _____           _       ___          _                 __             ___    ____
+  / ___/__________(_)___  /   |  ____  (_)___ ___  ____ _/ /_____  _____/   |  /  _/
+  \__ \/ ___/ ___/ / __ \/ /| | / __ \/ / __ `__ \/ __ `/ __/ __ \/ ___/ /| |  / /  
+ ___/ / /__/ /  / / /_/ / ___ |/ / / / / / / / / / /_/ / /_/ /_/ / /  / ___ |_/ /   
+/____/\___/_/  /_/ .___/_/  |_/_/ /_/_/_/ /_/ /_/\__,_/\__/\____/_/  /_/  |_/___/   
+                /_/                                                                 
 [*] Iniciando: LazyOwn Text to Video Script Assistant [;,;]
 """
 
 HELP_MESSAGE = """
 {message}
 
-[?] Uso: python text_to_script_video_tutorial.py --prompt "<tu prompt>" [--debug]
+[?] Uso: python main.py --prompt "<tu prompt>" [--debug]
 
 [?] Opciones:
   --prompt    "El prompt para la tarea de programación (requerido)."
@@ -85,6 +75,7 @@ def check_api_key() -> str:
        
     return api_key
 
+
 def configure_logging(debug: bool) -> None:
     level = logging.DEBUG if debug else logging.INFO
     logging.basicConfig(level=level, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -97,33 +88,30 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 def create_complex_prompt(base_prompt: str, history: str, knowledge_base: str, error_message: str = None) -> str:
-    error_context = f"The following error occurred during execution.: {error_message}" if error_message else "No errors detected in the last iteration."
+    error_context = f"El siguiente error ocurrió durante la ejecución: {error_message}" if error_message else "No se detectaron errores en la última iteración."
     return f"""
-You are an expert in creating highly professional and optimized scripts for production use. Your task is to generate a Python script that meets the following criteria:
+Eres un experto en crear scripts altamente profesionales y optimizados para uso en producción. Tu tarea es generar un script en Python que cumpla con los siguientes criterios:
 
-The script must include all necessary libraries for optimal performance and production use.
-The code should be well-structured, efficient, and follow best practices.
-The script is intended for a tutorial, so all explanations should be included as comments in Spanish.
-If you are unsure about any aspect of the requirements, ask between 3 to 7 clarifying questions to fully understand the goal before proceeding.
-Remember:
+El script debe incluir todas las bibliotecas necesarias para un rendimiento óptimo y uso en producción.
+El código debe estar bien estructurado, ser eficiente y seguir las mejores prácticas.
+El script está destinado a un tutorial, por lo que todas las explicaciones deben incluirse como comentarios en español.
+Si no estás seguro sobre algún aspecto de los requisitos, haz entre 3 a 7 preguntas aclaratorias para entender completamente el objetivo antes de proceder.
+Recuerda:
 
-Only respond with the script.
-All explanations should be written as comments in Spanish.
+Solo responde con el script.
+Todas las explicaciones deben estar escritas como comentarios en español.
 
-the script is: 
+El script es: 
 {base_prompt}
 
-Knowledge base:
+Base de conocimientos:
 {knowledge_base}
 
-Previous messages:
+Mensajes anteriores:
 {history}
 
 {error_context}
 """
-
-def execute_command(command: str) -> subprocess.CompletedProcess:
-    return subprocess.run(command, shell=True, capture_output=True, text=True)
 
 def load_knowledge_base(file_path: str) -> dict:
     if os.path.exists(file_path):
@@ -132,7 +120,7 @@ def load_knowledge_base(file_path: str) -> dict:
     return {}
 
 def save_knowledge_base(knowledge_base: dict, file_path: str) -> None:
-    with open(knowledge_base, 'r', encoding='utf-8') as f:
+    with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(knowledge_base, f, indent=4)
 
 def add_to_knowledge_base(prompt: str, command: str, file_path: str) -> None:
@@ -146,7 +134,7 @@ def get_relevant_knowledge(prompt: str) -> str:
     for key, value in knowledge_base.items():
         if prompt in key:
             relevant_knowledge.append(f"{key}: {value}")
-    return "\n".join(relevant_knowledge) if relevant_knowledge else "No relevant knowledge found."
+    return "\n".join(relevant_knowledge) if relevant_knowledge else "No se encontró conocimiento relevante."
 
 def transform_knowledge_base(client) -> None:
     original_knowledge_base = load_knowledge_base(KNOWLEDGE_BASE_FILE)
@@ -201,42 +189,63 @@ def main() -> None:
     configure_logging(args.debug)
 
     api_key = check_api_key()
-    client = Groq(api_key=api_key)
+    model = 'llama3-8b-8192'
+    groq_chat = ChatGroq(
+        groq_api_key=api_key, 
+        model_name=model
+    )
 
     if args.transform:
-        transform_knowledge_base(client)
+        transform_knowledge_base(groq_chat)
         return
 
     base_prompt = args.prompt
     history = []
     error_message = None
 
+    system_prompt = 'Eres un experto asistente de programación'
+    conversational_memory_length = 5
+
+    memory = ConversationBufferWindowMemory(k=conversational_memory_length, memory_key="chat_history", return_messages=True)
+
     while True:
         relevant_knowledge = get_relevant_knowledge(base_prompt)
         complex_prompt = create_complex_prompt(base_prompt, '\n'.join(history), relevant_knowledge, error_message)
-        error_message = None  # Reset the error message for the next iteration
-
+        error_message = None
+        system_prompt_complex = f"{complex_prompt} {system_prompt}"
         try:
-            chat_completion = client.chat.completions.create(
-                messages=[{"role": "user", "content": complex_prompt}],
-                model="llama3-8b-8192",
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    SystemMessage(content=system_prompt_complex),
+                    MessagesPlaceholder(variable_name="chat_history"),
+                    HumanMessagePromptTemplate.from_template("{human_input}"),
+                ]
             )
-            if args.debug:
-                logging.debug(f"[DEBUG] : {complex_prompt}")
-            message = chat_completion.choices[0].message.content.strip()
-            print(f"[R] Respuesta del modelo:\n{message}")
+
+            conversation = LLMChain(
+                llm=groq_chat,
+                prompt=prompt,
+                verbose=args.debug,
+                memory=memory,
+            )
+
+            response = conversation.predict(human_input=base_prompt)
+            code_content = re.search(r'```(.*?)```', response, re.DOTALL).group(1).strip()
+
+            print(f"[R] Respuesta del modelo:\n{code_content}")
 
             script_name = f"script_{int(time.time())}.py"
-            script_path = save_script(message, script_name)
+            response = code_content
+            script_path = save_script(response, script_name)
             print(f"[+] Script guardado en: {script_path}")
 
             generate_video_from_script(script_path)
             print(f"[+] Video generado a partir del script guardado.")
-            
+
             history.append(f"User: {base_prompt}")
-            history.append(f"AI: {message}")
-            add_to_knowledge_base(base_prompt, message, KNOWLEDGE_BASE_FILE)
-            
+            history.append(f"AI: {response}")
+            add_to_knowledge_base(base_prompt, response, KNOWLEDGE_BASE_FILE)
+
             base_prompt = input("\n[>] Ingresa el siguiente prompt (o 'exit' para salir): ")
             if base_prompt.lower() == 'exit':
                 break

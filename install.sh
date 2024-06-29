@@ -16,8 +16,8 @@ source $ENV_NAME/bin/activate
 pip install --upgrade pip
 
 # Instalar las bibliotecas necesarias
-pip install opencv-python Pillow moviepy groq signal argparse langchain langchain_groq
-
+# pip install opencv-python Pillow moviepy groq signal argparse langchain langchain_groq
+pip install -r requirements.txt
 # nos bajamos la ultima versión de la libreria para crear videos
 wget --no-verbose --timestamping --output-document=script_animator.py https://raw.githubusercontent.com/grisuno/ScriptAnimator/main/script_animator.py
 

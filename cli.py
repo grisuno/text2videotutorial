@@ -71,7 +71,7 @@ def show_help(message: str) -> None:
 def check_api_key() -> str:
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        api_key = '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'
+        api_key = 'gsk_01234567899876543210'
        
     return api_key
 

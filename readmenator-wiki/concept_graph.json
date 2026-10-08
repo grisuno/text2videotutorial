@@ -1,0 +1,98 @@
+{
+  "concepts": [
+    {
+      "name": "script",
+      "files": [
+        "cli.py",
+        "script_animator.py"
+      ],
+      "mentions": 4,
+      "confidence": "EXTRACTED"
+    },
+    {
+      "name": "add",
+      "files": [
+        "cli.py",
+        "script_animator.py"
+      ],
+      "mentions": 2,
+      "confidence": "EXTRACTED"
+    },
+    {
+      "name": "generate",
+      "files": [
+        "cli.py",
+        "script_animator.py"
+      ],
+      "mentions": 2,
+      "confidence": "EXTRACTED"
+    }
+  ],
+  "relations": [
+    {
+      "source": "add",
+      "target": "generate",
+      "verb": "depends_on",
+      "strength": 1.0,
+      "confidence": "INFERRED",
+      "evidence": [
+        "cli.py->script_animator.py"
+      ]
+    },
+    {
+      "source": "add",
+      "target": "script",
+      "verb": "depends_on",
+      "strength": 1.0,
+      "confidence": "INFERRED",
+      "evidence": [
+        "cli.py->script_animator.py"
+      ]
+    },
+    {
+      "source": "generate",
+      "target": "add",
+      "verb": "depends_on",
+      "strength": 1.0,
+      "confidence": "INFERRED",
+      "evidence": [
+        "cli.py->script_animator.py"
+      ]
+    },
+    {
+      "source": "generate",
+      "target": "script",
+      "verb": "depends_on",
+      "strength": 1.0,
+      "confidence": "INFERRED",
+      "evidence": [
+        "cli.py->script_animator.py"
+      ]
+    },
+    {
+      "source": "script",
+      "target": "add",
+      "verb": "depends_on",
+      "strength": 1.0,
+      "confidence": "INFERRED",
+      "evidence": [
+        "cli.py->script_animator.py"
+      ]
+    },
+    {
+      "source": "script",
+      "target": "generate",
+      "verb": "depends_on",
+      "strength": 1.0,
+      "confidence": "INFERRED",
+      "evidence": [
+        "cli.py->script_animator.py"
+      ]
+    }
+  ],
+  "dialectic": [
+    "Thesis: `add` centralizes 2 files; Antithesis: `generate` pulls 2 files with 2 shared (Jaccard 1.00); Synthesis: should they merge, split by layer, or keep `depends_on` explicit?",
+    "Thesis: `add` centralizes 2 files; Antithesis: `script` pulls 2 files with 2 shared (Jaccard 1.00); Synthesis: should they merge, split by layer, or keep `depends_on` explicit?",
+    "Thesis: `generate` centralizes 2 files; Antithesis: `script` pulls 2 files with 2 shared (Jaccard 1.00); Synthesis: should they merge, split by layer, or keep `depends_on` explicit?"
+  ]
+}

@@ -1,8 +1,8 @@
 # Subsystem: root
 
 ## cli.py
-- Doc: Autor: Gris Iscomeback Correo electrónico: grisiscomeback[at]gmail[dot]com Fecha de creación...
 - Layer: utility
+- Doc: main.py  Autor: Gris Iscomeback Correo electrónico: grisiscomeback[at]gmail[dot]com Fecha de creación: 09/06/2024 Licenc
 - Language: py
 - Symbols:
   - `signal_handler` (function, line 61) `def signal_handler(sig, frame)`
@@ -22,8 +22,8 @@
 - Depends on: `script_animator.py`
 
 ## install.sh
-- Doc: Nombre del entorno virtual
 - Layer: utility
+- Doc: Nombre del entorno virtual
 - Language: sh
 
 ## script_animator.py
@@ -31,6 +31,6 @@
 - Language: py
 - Symbols:
   - `add_text_to_image` (function, line 15) `def add_text_to_image(draw, text, position, font, color)`
-  - `generate_frames` (function, line 27) `def generate_frames(text, bg_image_path, font_path, output_resolution, fps, char_per_sec, margins, output_path...`
+  - `generate_frames` (function, line 27) `def generate_frames(text, bg_image_path, font_path, output_resolution, fps, char_per_sec, margins, output_path, audio_path)`
   - `main` (function, line 97) `def main()`
 - Imported by: `cli.py`

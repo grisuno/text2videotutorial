@@ -17,5 +17,5 @@
 | `signal_handler` | function | `cli.py:61` | `def signal_handler(sig, frame)` |
 | `transform_knowledge_base` | function | `cli.py:139` | `def transform_knowledge_base(client)` |
 | `add_text_to_image` | function | `script_animator.py:15` | `def add_text_to_image(draw, text, position, font, color)` |
-| `generate_frames` | function | `script_animator.py:27` | `def generate_frames(text, bg_image_path, font_path, output_resolution, fps, char_per_sec, margins, output_path...` |
+| `generate_frames` | function | `script_animator.py:27` | `def generate_frames(text, bg_image_path, font_path, output_resolution, fps, char_per_sec, margins, output_path, audio_pa` |
 | `main` | function | `script_animator.py:97` | `def main()` |

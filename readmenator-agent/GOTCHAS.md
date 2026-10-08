@@ -5,14 +5,8 @@
 These files have the most connections. Changes here have high blast radius.
 
 - `cli.py` (score: 3.40)
-- `script_animator.py` (score: 2.30, imported by 1 files)
+- `script_animator.py` (score: 2.30)
 - `install.sh` (score: 0.00)
-
-## Blast Radius (change impact)
-
-Editing these files can break the listed number of dependents. Run their tests after any change.
-
-- `script_animator.py` -- 1 direct, 1 total dependents
 
 ## Hotspots (complexity + centrality)
 
